@@ -23,7 +23,7 @@ enum Commands {
         service_bus: String,
     },
     /// Run a command against each git repository
-    Git { command: String },
+    Git { command: Vec<String> },
 }
 
 fn main() {
