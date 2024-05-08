@@ -24,6 +24,8 @@ enum Commands {
     },
     /// Run a command against each git repository
     Git { command: Vec<String> },
+    /// Allow authentication in applicationhost.config
+    ApplicationHost,
 }
 
 fn main() {
@@ -39,6 +41,9 @@ fn main() {
         }
         Commands::Git { command } => {
             commands::git_cmd::invoke(command, cli.path);
+        }
+        Commands::ApplicationHost => {
+            commands::application_host::invoke(cli.path);
         }
     }
 }
