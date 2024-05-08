@@ -23,7 +23,7 @@ enum Commands {
         service_bus: String,
     },
     /// Run a command against each git repository
-    GitCmd { command: String },
+    Git { command: String },
 }
 
 fn main() {
@@ -37,8 +37,8 @@ fn main() {
         } => {
             commands::connection_strings::invoke(computer_name, main, service_bus, cli.path);
         }
-        Commands::GitCmd { command } => {
-            commands::git_cmd::invoke(command);
+        Commands::Git { command } => {
+            commands::git_cmd::invoke(command, cli.path);
         }
     }
 }
