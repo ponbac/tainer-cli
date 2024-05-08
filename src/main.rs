@@ -26,6 +26,8 @@ enum Commands {
     Git { command: Vec<String> },
     /// Allow authentication in applicationhost.config
     ApplicationHost,
+    /// Fix Azure auth in Web API appsettings
+    WebApi,
 }
 
 fn main() {
@@ -44,6 +46,9 @@ fn main() {
         }
         Commands::ApplicationHost => {
             commands::application_host::invoke(cli.path);
+        }
+        Commands::WebApi => {
+            commands::web_api::invoke(cli.path);
         }
     }
 }

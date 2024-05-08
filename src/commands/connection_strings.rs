@@ -40,7 +40,7 @@ pub(crate) fn invoke(
 fn create_dev_appsettings(path: &Path, main: &str, service_bus: &str) {
     let content = std::fs::read_to_string(path).expect("Could not read file");
 
-    // if line contains "ELOS": replace it with the new connection string
+    // add the new connection strings
     let new_content = content
         .lines()
         .map(|line| match line {
