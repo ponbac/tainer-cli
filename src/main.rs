@@ -28,9 +28,16 @@ enum Commands {
     ApplicationHost,
     /// Fix Azure auth in Web API appsettings
     WebApi,
+    /// Create a new user in database, with an attached role
+    CreateUser {
+        name: String,
+        email: String,
+        connection_string: String,
+    },
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let cli = Cli::parse();
 
     match &cli.command {
@@ -49,6 +56,13 @@ fn main() {
         }
         Commands::WebApi => {
             commands::web_api::invoke(cli.path);
+        }
+        Commands::CreateUser {
+            name,
+            email,
+            connection_string,
+        } => {
+            commands::create_user::invoke(name, email, connection_string).await;
         }
     }
 }
