@@ -15,20 +15,13 @@ param(
   [Switch]$DownloadWithoutCurl = $false
 );
 
-# filter out 32 bit + ARM
-if (-not ((Get-CimInstance Win32_ComputerSystem)).SystemType -match "x64-based") {
-  Write-Output "Install Failed:"
-  Write-Output "Bun for Windows is currently only available for x86 64-bit Windows.`n"
-  return 1
-}
-
 # This corresponds to .win10_rs5 in build.zig
 $MinBuild = 17763;
 $MinBuildName = "Windows 10 1809"
 
 $WinVer = [System.Environment]::OSVersion.Version
 if ($WinVer.Major -lt 10 -or ($WinVer.Major -eq 10 -and $WinVer.Build -lt $MinBuild)) {
-  Write-Warning "Bun requires at ${MinBuildName} or newer.`n`nThe install will still continue but it may not work.`n"
+  Write-Warning "Requires at least ${MinBuildName} or newer.`n`nThe install will still continue but it may not work.`n"
   return 1
 }
 
@@ -90,21 +83,11 @@ function Get-Env {
 
 # The installation of bun is it's own function so that in the unlikely case the $IsBaseline check fails, we can do a recursive call.
 # There are also lots of sanity checks out of fear of anti-virus software or other weird Windows things happening.
-function Install-Bun {
+function Install-Tainer {
   param(
-    [string]$Version,
     [bool]$ForceBaseline = $False
   );
 
-  # if a semver is given, we need to adjust it to this format: bun-v0.0.0
-  if ($Version -match "^\d+\.\d+\.\d+$") {
-    $Version = "bun-v$Version"
-  }
-  elseif ($Version -match "^v\d+\.\d+\.\d+$") {
-    $Version = "bun-$Version"
-  }
-
-  $Arch = "x64"
   $IsBaseline = $ForceBaseline
   if (!$IsBaseline) {
     $IsBaseline = !( `
@@ -113,17 +96,17 @@ function Install-Bun {
     )::IsProcessorFeaturePresent(40);
   }
 
-  $BunRoot = if ($env:BUN_INSTALL) { $env:BUN_INSTALL } else { "${Home}\.bun" }
-  $BunBin = mkdir -Force "${BunRoot}\bin"
+  $TainerRoot = if ($env:TAINER_INSTALL) { $env:TAINER_INSTALL } else { "${Home}\.tainer" }
+  $TainerBin = mkdir -Force "${TainerRoot}\bin"
 
   try {
-    Remove-Item "${BunBin}\bun.exe" -Force
+    Remove-Item "${TainerBin}\tainer.exe" -Force
   } catch [System.Management.Automation.ItemNotFoundException] {
     # ignore
   } catch [System.UnauthorizedAccessException] {
-    $openProcesses = Get-Process -Name bun | Where-Object { $_.Path -eq "${BunBin}\bun.exe" }
+    $openProcesses = Get-Process -Name bun | Where-Object { $_.Path -eq "${TainerBin}\tainer.exe" }
     if ($openProcesses.Count -gt 0) {
-      Write-Output "Install Failed - An older installation exists and is open. Please close open Bun processes and try again."
+      Write-Output "Install Failed - An older installation exists and is open. Please close open tainer-cli processes and try again."
       return 1
     }
     Write-Output "Install Failed - An unknown error occurred while trying to remove the existing installation"
@@ -135,23 +118,13 @@ function Install-Bun {
     return 1
   }
 
-  $Target = "bun-windows-$Arch"
-  if ($IsBaseline) {
-    $Target = "bun-windows-$Arch-baseline"
-  }
-  $BaseURL = "https://github.com/oven-sh/bun/releases"
+  $Target = "tainer-cli-win64"
+  $BaseURL = "https://github.com/ponbac/tainer-cli/releases"
   $URL = "$BaseURL/$(if ($Version -eq "latest") { "latest/download" } else { "download/$Version" })/$Target.zip"
 
-  $ZipPath = "${BunBin}\$Target.zip"
+  $ZipPath = "${TainerBin}\$Target.zip"
 
-  $DisplayVersion = $(
-    if ($Version -eq "latest") { "Bun" }
-    elseif ($Version -eq "canary") { "Bun Canary" }
-    elseif ($Version -match "^bun-v\d+\.\d+\.\d+$") { "Bun $($Version.Substring(4))" }
-    else { "Bun tag='${Version}'" }
-  )
-
-  $null = mkdir -Force $BunBin
+  $null = mkdir -Force $TainerBin
   Remove-Item -Force $ZipPath -ErrorAction SilentlyContinue
 
   # curl.exe is faster than PowerShell 5's 'Invoke-WebRequest'
@@ -181,10 +154,11 @@ function Install-Bun {
   try {
     $lastProgressPreference = $global:ProgressPreference
     $global:ProgressPreference = 'SilentlyContinue';
-    Expand-Archive "$ZipPath" "$BunBin" -Force
+    Expand-Archive "$ZipPath" "$TainerBin" -Force
     $global:ProgressPreference = $lastProgressPreference
-    if (!(Test-Path "${BunBin}\$Target\bun.exe")) {
-      throw "The file '${BunBin}\$Target\bun.exe' does not exist. Download is corrupt or intercepted Antivirus?`n"
+    # MARKER!
+    if (!(Test-Path "${TainerBin}\$Target\tainer.exe")) {
+      throw "The file '${TainerBin}\$Target\tainer.exe' does not exist. Download is corrupt or intercepted Antivirus?`n"
     }
   } catch {
     Write-Output "Install Failed - could not unzip $ZipPath"
@@ -192,23 +166,13 @@ function Install-Bun {
     return 1
   }
 
-  Move-Item "${BunBin}\$Target\bun.exe" "${BunBin}\bun.exe" -Force
+  Move-Item "${TainerBin}\$Target\tainer.exe" "${TainerBin}\tainer.exe" -Force
 
-  Remove-Item "${BunBin}\$Target" -Recurse -Force
+  Remove-Item "${TainerBin}\$Target" -Recurse -Force
   Remove-Item $ZipPath -Force
 
-  $BunRevision = "$(& "${BunBin}\bun.exe" --revision)"
   if ($LASTEXITCODE -eq 1073741795) { # STATUS_ILLEGAL_INSTRUCTION
-    if ($IsBaseline) {
-      Write-Output "Install Failed - bun.exe (baseline) is not compatible with your CPU.`n"
-      Write-Output "Please open a GitHub issue with your CPU model:`nhttps://github.com/oven-sh/bun/issues/new/choose`n"
-      return 1
-    }
-
-    Write-Output "Install Failed - bun.exe is not compatible with your CPU. This should have been detected before downloading.`n"
-    Write-Output "Attempting to download bun.exe (baseline) instead.`n"
-
-    Install-Bun -Version $Version -ForceBaseline $True
+    Write-Output "Install Failed - tainer.exe is not compatible with your CPU. This should have been detected before downloading.`n"
     return 1
   }
   # '-1073741515' was spotted in the wild, but not clearly documented as a status code:
@@ -216,55 +180,31 @@ function Install-Bun {
   # http://community.sqlbackupandftp.com/t/error-1073741515-solved/1305
   if (($LASTEXITCODE -eq 3221225781) -or ($LASTEXITCODE -eq -1073741515)) # STATUS_DLL_NOT_FOUND
   { 
-    Write-Output "Install Failed - You are missing a DLL required to run bun.exe"
+    Write-Output "Install Failed - You are missing a DLL required to run tainer.exe"
     Write-Output "This can be solved by installing the Visual C++ Redistributable from Microsoft:`nSee https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist`nDirect Download -> https://aka.ms/vs/17/release/vc_redist.x64.exe`n`n"
-    Write-Output "The command '${BunBin}\bun.exe --revision' exited with code ${LASTEXITCODE}`n"
+    Write-Output "The command '${TainerBin}\tainer.exe --revision' exited with code ${LASTEXITCODE}`n"
     return 1
   }
   if ($LASTEXITCODE -ne 0) {
-    Write-Output "Install Failed - could not verify bun.exe"
-    Write-Output "The command '${BunBin}\bun.exe --revision' exited with code ${LASTEXITCODE}`n"
+    Write-Output "Install Failed - could not verify tainer.exe"
+    Write-Output "The command '${TainerBin}\tainer.exe --revision' exited with code ${LASTEXITCODE}`n"
     return 1
   }
 
-  try {
-    $env:IS_BUN_AUTO_UPDATE = "1"
-    # TODO: When powershell completions are added, make this switch actually do something
-    if ($NoCompletions) {
-      $env:BUN_NO_INSTALL_COMPLETIONS = "1"
-    }
-    # This completions script in general will install some extra stuff, mainly the `bunx` link.
-    # It also installs completions.
-    $output = "$(& "${BunBin}\bun.exe" completions 2>&1)"
-    if ($LASTEXITCODE -ne 0) {
-      Write-Output $output
-      Write-Output "Install Failed - could not finalize installation"
-      Write-Output "The command '${BunBin}\bun.exe completions' exited with code ${LASTEXITCODE}`n"
-      return 1
-    }
-  } catch {
-    # it is possible on powershell 5 that an error happens, but it is probably fine?
-  }
   $env:IS_BUN_AUTO_UPDATE = $null
   $env:BUN_NO_INSTALL_COMPLETIONS = $null
-
-  $DisplayVersion = if ($BunRevision -like "*-canary.*") {
-    "${BunRevision}"
-  } else {
-    "$(& "${BunBin}\bun.exe" --version)"
-  }
 
   $C_RESET = [char]27 + "[0m"
   $C_GREEN = [char]27 + "[1;32m"
 
-  Write-Output "${C_GREEN}Bun ${DisplayVersion} was installed successfully!${C_RESET}"
-  Write-Output "The binary is located at ${BunBin}\bun.exe`n"
+  Write-Output "${C_GREEN}Envirotainer-CLI was installed successfully!${C_RESET}"
+  Write-Output "The binary is located at ${TainerBin}\tainer.exe`n"
 
   $hasExistingOther = $false;
   try {
-    $existing = Get-Command bun -ErrorAction
-    if ($existing.Source -ne "${BunBin}\bun.exe") {
-      Write-Warning "Note: Another bun.exe is already in %PATH% at $($existing.Source)`nTyping 'bun' in your terminal will not use what was just installed.`n"
+    $existing = Get-Command tainer -ErrorAction
+    if ($existing.Source -ne "${TainerBin}\tainer.exe") {
+      Write-Warning "Note: Another tainer.exe is already in %PATH% at $($existing.Source)`nTyping 'tainer' in your terminal will not use what was just installed.`n"
       $hasExistingOther = $true;
     }
   } catch {}
@@ -272,36 +212,36 @@ function Install-Bun {
   if (-not $NoRegisterInstallation) {
     $rootKey = $null
     try {
-      $RegistryKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\Bun"  
+      $RegistryKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\Tainer"  
       $rootKey = New-Item -Path $RegistryKey -Force
-      New-ItemProperty -Path $RegistryKey -Name "DisplayName" -Value "Bun" -PropertyType String -Force | Out-Null
-      New-ItemProperty -Path $RegistryKey -Name "InstallLocation" -Value "${BunRoot}" -PropertyType String -Force | Out-Null
-      New-ItemProperty -Path $RegistryKey -Name "DisplayIcon" -Value $BunBin\bun.exe -PropertyType String -Force | Out-Null
-      New-ItemProperty -Path $RegistryKey -Name "UninstallString" -Value "powershell -c `"& `'$BunRoot\uninstall.ps1`' -PauseOnError`" -ExecutionPolicy Bypass" -PropertyType String -Force | Out-Null
+      New-ItemProperty -Path $RegistryKey -Name "DisplayName" -Value "Tainer" -PropertyType String -Force | Out-Null
+      New-ItemProperty -Path $RegistryKey -Name "InstallLocation" -Value "${TainerRoot}" -PropertyType String -Force | Out-Null
+      New-ItemProperty -Path $RegistryKey -Name "DisplayIcon" -Value $TainerBin\tainer.exe -PropertyType String -Force | Out-Null
+      New-ItemProperty -Path $RegistryKey -Name "UninstallString" -Value "powershell -c `"& `'$TainerRoot\uninstall.ps1`' -PauseOnError`" -ExecutionPolicy Bypass" -PropertyType String -Force | Out-Null
     } catch {
-      if ($rootKey -ne $null) {
+      if ($null -ne $rootKey) {
         Remove-Item -Path $RegistryKey -Force
       }
     }
   }
 
   if(!$hasExistingOther) {
-    # Only try adding to path if there isn't already a bun.exe in the path
+    # Only try adding to path if there isn't already a tainer.exe in the path
     $Path = (Get-Env -Key "Path") -split ';'
-    if ($Path -notcontains $BunBin) {
+    if ($Path -notcontains $TainerBin) {
       if (-not $NoPathUpdate) {
-        $Path += $BunBin
+        $Path += $TainerBin
         Write-Env -Key 'Path' -Value ($Path -join ';')
         $env:PATH = $Path;
       } else {
-        Write-Output "Skipping adding '${BunBin}' to the user's %PATH%`n"
+        Write-Output "Skipping adding '${TainerBin}' to the user's %PATH%`n"
       }
     }
 
-    Write-Output "To get started, restart your terminal/editor, then type `"bun`"`n"
+    Write-Output "To get started, restart your terminal/editor, then type `"tainer`"`n"
   }
 
   $LASTEXITCODE = 0;
 }
 
-Install-Bun -Version $Version -ForceBaseline $ForceBaseline
+Install-Tainer -Version $Version -ForceBaseline $ForceBaseline
