@@ -35,7 +35,8 @@ jobs:
           cargo rustc --bin tainer-cli --release --target=x86_64-pc-windows-gnu -- -C linker=x86_64-w64-mingw32-gcc
           mkdir builds/tainer-cli-win64
           mv target/x86_64-pc-windows-gnu/release/tainer-cli.exe target/x86_64-pc-windows-gnu/release/tainer.exe
-          7z a dist/tainer-cli-win64.zip target/x86_64-pc-windows-gnu/release/tainer.exe
+          cd target/x86_64-pc-windows-gnu/release
+          7z a ../../../dist/tainer-cli-win64.zip tainer.exe
 
       - name: Upload release
         uses: softprops/action-gh-release@v1
