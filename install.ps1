@@ -157,8 +157,8 @@ function Install-Tainer {
     Expand-Archive "$ZipPath" "$TainerBin" -Force
     $global:ProgressPreference = $lastProgressPreference
     # MARKER!
-    if (!(Test-Path "${TainerBin}\$Target\tainer.exe")) {
-      throw "The file '${TainerBin}\$Target\tainer.exe' does not exist. Download is corrupt or intercepted Antivirus?`n"
+    if (!(Test-Path "${TainerBin}\tainer.exe")) {
+      throw "The file '${TainerBin}\tainer.exe' does not exist. Download is corrupt or intercepted Antivirus?`n"
     }
   } catch {
     Write-Output "Install Failed - could not unzip $ZipPath"
@@ -166,9 +166,6 @@ function Install-Tainer {
     return 1
   }
 
-  Move-Item "${TainerBin}\$Target\tainer.exe" "${TainerBin}\tainer.exe" -Force
-
-  Remove-Item "${TainerBin}\$Target" -Recurse -Force
   Remove-Item $ZipPath -Force
 
   if ($LASTEXITCODE -eq 1073741795) { # STATUS_ILLEGAL_INSTRUCTION
