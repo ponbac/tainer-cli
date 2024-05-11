@@ -1,3 +1,8 @@
+# Tainer-CLI
+A CLI tool made for easing the installation process of primarily the ELOS backend.
+
+**Most commands assume that you are standing in the root of the ELOS repository! *(another path can be provided with the `-p` flag if you do not want to use the current directory)***
+
 ## Installation
 ```powershell
 powershell -c "irm raw.githubusercontent.com/ponbac/tainer-cli/master/install.ps1 | iex"
