@@ -20,7 +20,10 @@ pub(crate) fn invoke(cmd: &Vec<String>, root_path: Option<PathBuf>) {
                 .status()
                 .expect("Failed to run git command");
 
-            let module = path.file_name().unwrap().to_str().unwrap();
+            let module = path
+                .file_name()
+                .unwrap_or(path.as_os_str())
+                .to_string_lossy();
             (status.success(), module.to_string())
         })
         .partition(|(success, _)| *success);
