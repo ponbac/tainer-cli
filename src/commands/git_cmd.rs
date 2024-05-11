@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use console::style;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use walkdir::{DirEntry, WalkDir};
 
@@ -10,20 +11,39 @@ pub(crate) fn invoke(cmd: &Vec<String>, root_path: Option<PathBuf>) {
         .map(|e| e.path().to_path_buf())
         .collect::<Vec<_>>();
 
-    git_dirs.par_iter().for_each(|path| {
-        let status = std::process::Command::new("git")
-            .args(cmd)
-            .current_dir(path)
-            .status()
-            .expect("Failed to run git command");
+    let (successes, failures): (Vec<_>, Vec<_>) = git_dirs
+        .par_iter()
+        .map(|path| {
+            let status = std::process::Command::new("git")
+                .args(cmd)
+                .current_dir(path)
+                .status()
+                .expect("Failed to run git command");
 
-        let joined_cmd = cmd.join(" ");
-        if status.success() {
-            println!("Ran 'git {}' in {}", joined_cmd, path.display());
-        } else {
-            println!("Failed to run 'git {}' in {}", joined_cmd, path.display());
+            let module = path.file_name().unwrap().to_str().unwrap();
+            (status.success(), module.to_string())
+        })
+        .partition(|(success, _)| *success);
+
+    let joined_cmd = format!("git {}", cmd.join(" "));
+    if !successes.is_empty() {
+        for (_, module) in successes {
+            println!(
+                "✅ - executed {} in {}",
+                style(&joined_cmd).bold().dim(),
+                style(&module).bold()
+            );
         }
-    });
+    }
+    if !failures.is_empty() {
+        for (_, module) in failures {
+            println!(
+                "❌ - {} failed in {}",
+                style(&joined_cmd).bold().dim(),
+                style(&module).bold().red()
+            );
+        }
+    }
 }
 
 fn is_git_repo(entry: &DirEntry) -> bool {
