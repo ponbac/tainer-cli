@@ -34,6 +34,8 @@ enum Commands {
         email: String,
         connection_string: String,
     },
+    /// For the inital setup of ELOS, runs all the other commands
+    Setup,
 }
 
 #[tokio::main]
@@ -64,6 +66,9 @@ async fn main() {
             connection_string,
         } => {
             commands::create_user::invoke(name, email, connection_string).await;
+        }
+        Commands::Setup => {
+            commands::setup::invoke(&root_path);
         }
     }
 }
