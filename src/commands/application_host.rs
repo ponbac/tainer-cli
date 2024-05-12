@@ -1,8 +1,7 @@
-use std::path::PathBuf;
+use std::path::Path;
 
-pub(crate) fn invoke(root_path: Option<PathBuf>) {
-    let path = root_path.unwrap_or(PathBuf::from("."));
-    let apphost_path = path.join(".vs/Envirotainer.ELOS/config/applicationhost.config");
+pub(crate) fn invoke(root_path: &Path) {
+    let apphost_path = root_path.join(".vs/Envirotainer.ELOS/config/applicationhost.config");
 
     if !apphost_path.exists() {
         eprintln!("No applicationhost.config found at {:?}", apphost_path);

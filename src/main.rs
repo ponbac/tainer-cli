@@ -40,22 +40,23 @@ enum Commands {
 async fn main() {
     let cli = Cli::parse();
 
+    let root_path = cli.path.unwrap_or_else(|| PathBuf::from("."));
     match &cli.command {
         Commands::ConnectionStrings {
             computer_name,
             main,
             service_bus,
         } => {
-            commands::connection_strings::invoke(computer_name, main, service_bus, cli.path);
+            commands::connection_strings::invoke(computer_name, main, service_bus, &root_path);
         }
         Commands::Git { command } => {
-            commands::git_cmd::invoke(command, cli.path);
+            commands::git_cmd::invoke(command, &root_path);
         }
         Commands::ApplicationHost => {
-            commands::application_host::invoke(cli.path);
+            commands::application_host::invoke(&root_path);
         }
         Commands::WebApi => {
-            commands::web_api::invoke(cli.path);
+            commands::web_api::invoke(&root_path);
         }
         Commands::CreateUser {
             name,

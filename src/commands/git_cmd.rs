@@ -1,11 +1,11 @@
-use std::path::PathBuf;
+use std::path::Path;
 
 use console::style;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use walkdir::{DirEntry, WalkDir};
 
-pub(crate) fn invoke(cmd: &Vec<String>, root_path: Option<PathBuf>) {
-    let git_dirs = WalkDir::new(root_path.unwrap_or(PathBuf::from(".")))
+pub(crate) fn invoke(cmd: &Vec<String>, root_path: &Path) {
+    let git_dirs = WalkDir::new(root_path)
         .into_iter()
         .filter_map(|e| e.ok().filter(is_git_repo))
         .map(|e| e.path().to_path_buf())

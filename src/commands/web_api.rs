@@ -1,8 +1,7 @@
-use std::path::PathBuf;
+use std::path::Path;
 
-pub(crate) fn invoke(root_path: Option<PathBuf>) {
+pub(crate) fn invoke(root_path: &Path) {
     let app_settings_path = root_path
-        .unwrap_or(PathBuf::from("."))
         .join("Web.Api/Envirotainer.ELOS.Web.Api")
         .join("appsettings.Development.json");
 

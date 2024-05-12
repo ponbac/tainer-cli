@@ -1,16 +1,11 @@
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use walkdir::{DirEntry, WalkDir};
 
 static CONFIG_FILES: [&str; 3] = ["app.config", "web.config", "appsettings.json"];
 
-pub(crate) fn invoke(
-    computer_name: &str,
-    main: &str,
-    service_bus: &str,
-    root_path: Option<PathBuf>,
-) {
-    for entry in WalkDir::new(root_path.unwrap_or(PathBuf::from(".")))
+pub(crate) fn invoke(computer_name: &str, main: &str, service_bus: &str, root_path: &Path) {
+    for entry in WalkDir::new(root_path)
         .into_iter()
         .filter_entry(|e| !is_hidden(e))
         .filter_map(|e| e.ok().filter(is_config_file))
