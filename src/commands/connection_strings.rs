@@ -57,21 +57,28 @@ fn create_dev_appsettings(path: &Path, main: &str, service_bus: &str) {
 fn append_connection_string(path: &Path, computer_name: &str, main: &str, service_bus: &str) {
     let content = std::fs::read_to_string(path).expect("Could not read file");
 
+    let mut main_replaced = false;
+    let mut service_bus_replaced = false;
     let new_content = content
         .lines()
         .map(|line| {
             if line.contains(&format!(r#"name="{}""#, computer_name)) {
+                main_replaced = true;
                 main_connection_string(computer_name, main)
             } else if line.contains(&format!(r#"name="{}_NSERVICEBUS""#, computer_name)) {
+                service_bus_replaced = true;
                 service_bus_connection_string(computer_name, service_bus)
             } else if line.contains("</connectionStrings>") {
-                format!(
-                    r#"    {}
-    {}
-    </connectionStrings>"#,
-                    main_connection_string(computer_name, main),
-                    service_bus_connection_string(computer_name, service_bus)
-                )
+                let mut new_line = String::new();
+                if !main_replaced {
+                    new_line.push_str(&main_connection_string(computer_name, main));
+                    new_line.push('\n');
+                } else if !service_bus_replaced {
+                    new_line.push_str(&service_bus_connection_string(computer_name, service_bus));
+                    new_line.push('\n');
+                }
+                new_line.push_str("  </connectionStrings>");
+                new_line
             } else {
                 line.to_string()
             }
