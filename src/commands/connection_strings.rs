@@ -56,14 +56,28 @@ fn create_dev_appsettings(path: &Path, main: &str, service_bus: &str) {
 
 fn append_connection_string(path: &Path, computer_name: &str, main: &str, service_bus: &str) {
     let content = std::fs::read_to_string(path).expect("Could not read file");
-    let new_content = content.replace(
-        "</connectionStrings>",
-        &format!(
-            r#"  <add name="{computer_name}" providerName="System.Data.SqlClient" connectionString="{main}" />
-    <add name="{computer_name}_NSERVICEBUS" providerName="System.Data.SqlClient" connectionString="{service_bus}" />
-  </connectionStrings>"#
-        ),
-    );
+
+    let new_content = content
+        .lines()
+        .map(|line| {
+            if line.contains(&format!(r#"name="{}""#, computer_name)) {
+                main_connection_string(computer_name, main)
+            } else if line.contains(&format!(r#"name="{}_NSERVICEBUS""#, computer_name)) {
+                service_bus_connection_string(computer_name, service_bus)
+            } else if line.contains("</connectionStrings>") {
+                format!(
+                    r#"    {}
+    {}
+    </connectionStrings>"#,
+                    main_connection_string(computer_name, main),
+                    service_bus_connection_string(computer_name, service_bus)
+                )
+            } else {
+                line.to_string()
+            }
+        })
+        .collect::<Vec<String>>()
+        .join("\n");
 
     std::fs::write(path, new_content).expect("Could not write to file");
 }
@@ -82,4 +96,20 @@ fn is_hidden(entry: &DirEntry) -> bool {
         .to_str()
         .map(|s| s.starts_with('.'))
         .unwrap_or(false)
+}
+
+fn main_connection_string(computer_name: &str, main: &str) -> String {
+    format!(
+        r#"  <add name="{computer_name}" providerName="System.Data.SqlClient" connectionString="{main}" />"#,
+        computer_name = computer_name,
+        main = main
+    )
+}
+
+fn service_bus_connection_string(computer_name: &str, service_bus: &str) -> String {
+    format!(
+        r#"  <add name="{computer_name}_NSERVICEBUS" providerName="System.Data.SqlClient" connectionString="{service_bus}" />"#,
+        computer_name = computer_name,
+        service_bus = service_bus
+    )
 }
