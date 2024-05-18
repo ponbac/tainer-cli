@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use walkdir::{DirEntry, WalkDir};
 
 #[derive(Debug)]
@@ -50,7 +51,7 @@ pub fn init_submodules(root_path: &Path) {
         .expect("Failed to run git command");
 
     let git_modules = find_git_modules(root_path);
-    for module in git_modules {
+    git_modules.par_iter().for_each(|module| {
         let fetch_status = std::process::Command::new("git")
             .args(["fetch"])
             .current_dir(&module.path)
@@ -67,7 +68,7 @@ pub fn init_submodules(root_path: &Path) {
         } else {
             println!("❌ - failed to initialize and update {}", module.name);
         }
-    }
+    });
 }
 
 fn is_git_repo(entry: &DirEntry) -> bool {
