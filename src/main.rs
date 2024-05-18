@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use clap::{Parser, Subcommand};
 
 pub(crate) mod commands;
+pub(crate) mod git;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]

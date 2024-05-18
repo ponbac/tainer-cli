@@ -2,44 +2,21 @@ use std::path::Path;
 
 use console::style;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-use walkdir::{DirEntry, WalkDir};
+
+use crate::git::find_git_modules;
 
 pub(crate) fn invoke(cmd: &Vec<String>, root_path: &Path) {
-    let git_dirs = WalkDir::new(root_path)
-        .into_iter()
-        .filter_map(|e| e.ok().filter(is_git_repo))
-        .map(|e| e.path().to_path_buf())
-        .collect::<Vec<_>>();
-
-    let (successes, failures): (Vec<_>, Vec<_>) = git_dirs
+    let git_modules = find_git_modules(root_path);
+    let (successes, failures): (Vec<_>, Vec<_>) = git_modules
         .par_iter()
-        .map(|path| {
+        .map(|module| {
             let status = std::process::Command::new("git")
                 .args(cmd)
-                .current_dir(path)
+                .current_dir(&module.path)
                 .status()
                 .expect("Failed to run git command");
 
-            let module = match path.file_name() {
-                Some(name) => name.to_string_lossy().into_owned(),
-                None => {
-                    let path_str = path.to_string_lossy();
-
-                    // if the path is '.' resolve the current directory
-                    if path_str == "." {
-                        let current_dir =
-                            std::env::current_dir().expect("Failed to get current directory");
-                        current_dir
-                            .file_name()
-                            .unwrap_or(current_dir.as_os_str())
-                            .to_string_lossy()
-                            .into_owned()
-                    } else {
-                        path_str.to_string()
-                    }
-                }
-            };
-            (status.success(), module.to_string())
+            (status.success(), &module.name)
         })
         .partition(|(success, _)| *success);
 
@@ -62,8 +39,4 @@ pub(crate) fn invoke(cmd: &Vec<String>, root_path: &Path) {
             );
         }
     }
-}
-
-fn is_git_repo(entry: &DirEntry) -> bool {
-    entry.path().join(".git").exists()
 }
