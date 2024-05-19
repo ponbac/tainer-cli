@@ -38,6 +38,8 @@ enum Commands {
     },
     /// For the inital setup of ELOS, runs all the other commands
     Setup,
+    /// Watch files
+    Watch,
 }
 
 #[tokio::main]
@@ -71,6 +73,9 @@ async fn main() {
         }
         Commands::Setup => {
             commands::setup::invoke(&root_path);
+        }
+        Commands::Watch => {
+            let _ = commands::watch::invoke(&root_path);
         }
     }
 }
