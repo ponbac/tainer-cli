@@ -66,6 +66,32 @@ pub fn execute_ps1(script_path: &str, args: &[&str]) -> Result<(), String> {
     }
 }
 
+pub fn get_computer_name() -> String {
+    let output = Command::new("powershell")
+        .args(["-NoProfile", "-Command", "Write-Output $env:COMPUTERNAME"])
+        .output()
+        .expect("Failed to execute PowerShell command")
+        .stdout;
+
+    String::from_utf8(output)
+        .expect("Failed to convert output to string")
+        .trim()
+        .to_string()
+}
+
+pub fn get_account_name() -> String {
+    let output = Command::new("powershell")
+        .args(["-NoProfile", "-Command", "Write-Output $env:USERNAME"])
+        .output()
+        .expect("Failed to execute PowerShell command")
+        .stdout;
+
+    String::from_utf8(output)
+        .expect("Failed to convert output to string")
+        .trim()
+        .to_string()
+}
+
 fn is_admin_shell() -> bool {
     let powershell_command = r#"
     $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
