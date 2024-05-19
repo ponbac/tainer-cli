@@ -4,6 +4,7 @@ use clap::{Parser, Subcommand};
 
 pub(crate) mod commands;
 pub(crate) mod git;
+pub(crate) mod win;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
