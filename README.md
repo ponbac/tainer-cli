@@ -28,8 +28,8 @@ This will install the tool under your home directory and append it to your path,
 Will append your connection strings to all `app.config` and `web.config` files. This command also searches for `appsettings.json` and creates a development copy (`appsettings.Development.json`) with your connection strings.
 
 ```powershell
-# tainer connection-strings <COMPUTER_NAME> <MAIN_DB_CONNECTION_STRING> <SERVICE_BUS_CONNECTION_STRING>
-tainer connection-strings PINKGOLD "Data Source=PINKGOLD\PINKGOLD16;Initial Catalog=dbEnvirotainerELOS;Integrated Security=SSPI;" "Data Source=PINKGOLD\PINKGOLD16;Initial Catalog=EnvirotainerNServiceBus;Integrated Security=SSPI;"
+# tainer connection-strings <MAIN_DB_CONNECTION_STRING> <SERVICE_BUS_CONNECTION_STRING>
+tainer connection-strings "Data Source=PINKGOLD\PINKGOLD16;Initial Catalog=dbEnvirotainerELOS;Integrated Security=SSPI;" "Data Source=PINKGOLD\PINKGOLD16;Initial Catalog=EnvirotainerNServiceBus;Integrated Security=SSPI;"
 ```
 
 ### git

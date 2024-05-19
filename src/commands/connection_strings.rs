@@ -2,9 +2,11 @@ use std::path::Path;
 
 use walkdir::{DirEntry, WalkDir};
 
+use crate::win;
+
 static CONFIG_FILES: [&str; 3] = ["app.config", "web.config", "appsettings.json"];
 
-pub(crate) fn invoke(computer_name: &str, main: &str, service_bus: &str, root_path: &Path) {
+pub(crate) fn invoke(main: &str, service_bus: &str, root_path: &Path) {
     for entry in WalkDir::new(root_path)
         .into_iter()
         .filter_entry(|e| !is_hidden(e))
@@ -25,7 +27,8 @@ pub(crate) fn invoke(computer_name: &str, main: &str, service_bus: &str, root_pa
             }
             Some("config") => {
                 println!("Appending connection strings for {}", short_path);
-                append_connection_string(path, computer_name, main, service_bus)
+                let computer_name = win::get_computer_name();
+                append_connection_string(path, &computer_name, main, service_bus)
             }
             _ => println!("Unsupported file type!"),
         }

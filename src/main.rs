@@ -19,11 +19,7 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// Sets your connection strings everywhere it needs to be set
-    ConnectionStrings {
-        computer_name: String,
-        main: String,
-        service_bus: String,
-    },
+    ConnectionStrings { main: String, service_bus: String },
     /// Run a command against each git repository
     Git { command: Vec<String> },
     /// Allow authentication in applicationhost.config
@@ -48,12 +44,8 @@ async fn main() {
 
     let root_path = cli.path.unwrap_or_else(|| PathBuf::from("."));
     match &cli.command {
-        Commands::ConnectionStrings {
-            computer_name,
-            main,
-            service_bus,
-        } => {
-            commands::connection_strings::invoke(computer_name, main, service_bus, &root_path);
+        Commands::ConnectionStrings { main, service_bus } => {
+            commands::connection_strings::invoke(main, service_bus, &root_path);
         }
         Commands::Git { command } => {
             commands::git_cmd::invoke(command, &root_path);
@@ -72,7 +64,7 @@ async fn main() {
             commands::create_user::invoke(name, email, connection_string).await;
         }
         Commands::Setup => {
-            commands::setup::invoke(&root_path);
+            commands::setup::invoke(&root_path).await;
         }
         Commands::Watch => {
             let _ = commands::watch::invoke(&root_path);

@@ -7,7 +7,7 @@ use crate::{
     win::{self},
 };
 
-pub(crate) fn invoke(root_path: &Path) {
+pub(crate) async fn invoke(root_path: &Path) {
     println!("Running setup command");
     git::init_submodules(root_path);
 
@@ -44,8 +44,6 @@ pub(crate) fn invoke(root_path: &Path) {
     }
 
     // Set up connection strings
-    let computer_name = win::get_computer_name();
-    println!("Computer name: {}", computer_name);
     let main_connection_string: String = Input::new()
         .with_prompt("Main connection string (dbEnvirotainerELOS)")
         .interact()
@@ -54,9 +52,7 @@ pub(crate) fn invoke(root_path: &Path) {
         .with_prompt("Service bus connection string (EnvirotainerNServiceBus)")
         .interact()
         .expect("Failed to get service bus connection string");
-
     commands::connection_strings::invoke(
-        &computer_name,
         &main_connection_string,
         &service_bus_connection_string,
         root_path,
@@ -65,6 +61,16 @@ pub(crate) fn invoke(root_path: &Path) {
     commands::application_host::invoke(root_path);
     // Fix Web API appsettings
     commands::web_api::invoke(root_path);
+    // Create a new user in database
+    let user_name: String = Input::new()
+        .with_prompt("First and last name of the new user (e.g. Pontus Backman)")
+        .interact()
+        .expect("Failed to get user name");
+    let user_email: String = Input::new()
+        .with_prompt("Email of the new user (e.g. pontus.backman@spinit.se)")
+        .interact()
+        .expect("Failed to get user email");
+    commands::create_user::invoke(&user_name, &user_email, &main_connection_string).await;
 
     println!("Setup command has finished.");
 }
