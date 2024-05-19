@@ -1,3 +1,5 @@
+use futures_util::TryStreamExt;
+use tiberius::QueryItem;
 use tiberius::{Client, Config};
 use tokio::net::TcpStream;
 use tokio_util::compat::{Compat, TokioAsyncWriteCompatExt};
@@ -13,6 +15,14 @@ pub(crate) async fn invoke(name: &str, email: &str, connection_string: &str) {
     let mut client = init_client(connection_string)
         .await
         .expect("Could not connect to database");
+
+    if user_with_email_exists(&mut client, email)
+        .await
+        .expect("Could not check if user exists")
+    {
+        eprintln!("User with email {} already exists", email);
+        return;
+    }
 
     println!("Adding user {} with email {}", name, email);
     let user_id = insert_user(&mut client, name, email)
@@ -100,6 +110,30 @@ async fn add_role_to_user(
             Err(e)
         }
     }
+}
+
+async fn user_with_email_exists(
+    client: &mut Client<Compat<TcpStream>>,
+    email: &str,
+) -> Result<bool, tiberius::error::Error> {
+    let query = r#"SELECT COUNT(*)
+        FROM [dbo].[User]
+        WHERE [Email] = @P1"#;
+
+    let mut stream = client.query(query, &[&email]).await?;
+    let mut exists = false;
+    while let Some(item) = stream.try_next().await? {
+        match item {
+            QueryItem::Row(row) if row.result_index() == 0 => {
+                row.get::<i32, _>(0)
+                    .map(|count| exists = count > 0)
+                    .expect("Could not get count");
+            }
+            _ => {}
+        }
+    }
+
+    Ok(exists)
 }
 
 async fn init_client(
