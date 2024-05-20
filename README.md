@@ -25,6 +25,8 @@ This will install the tool under your home directory and append it to your path,
 
 ### setup
 
+**This command has to be run in a shell with admin privileges!**
+
 Will run all the commands in the correct order to set up your environment and init all submodules. This includes setting connection strings, creating a user in the database, and enabling authentication in your `applicationhost.config`. Will also check if MSMQ is enabled and if not, enable it and initialize all queues.
 
 ```powershell
