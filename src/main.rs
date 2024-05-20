@@ -32,8 +32,11 @@ enum Commands {
         email: String,
         connection_string: String,
     },
-    /// For the inital setup of ELOS, runs all the other commands
-    Setup,
+    /// For the inital setup of ELOS, tries to get it into a working state
+    Setup {
+        main: Option<String>,
+        service_bus: Option<String>,
+    },
     /// Watch files
     Watch,
 }
@@ -65,8 +68,8 @@ async fn main() {
         } => {
             commands::create_user::invoke(name, email, connection_string).await;
         }
-        Commands::Setup => {
-            commands::setup::invoke(&root_path).await;
+        Commands::Setup { main, service_bus } => {
+            commands::setup::invoke(main, service_bus, &root_path).await;
         }
         Commands::Watch => {
             let _ = commands::watch::invoke(&root_path);

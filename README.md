@@ -23,6 +23,15 @@ This will install the tool under your home directory and append it to your path,
 
 ## Examples
 
+### setup
+
+Will run all the commands in the correct order to set up your environment and init all submodules. This includes setting connection strings, creating a user in the database, and enabling authentication in your `applicationhost.config`. Will also check if MSMQ is enabled and if not, enable it and initialize all queues.
+
+```powershell
+# tainer setup <MAIN_DB_CONNECTION_STRING> <SERVICE_BUS_CONNECTION_STRING>
+tainer setup "Data Source=PINKGOLD\PINKGOLD16;Initial Catalog=dbEnvirotainerELOS;Integrated Security=SSPI;" "Data Source=PINKGOLD\PINKGOLD16;Initial Catalog=EnvirotainerNServiceBus;Integrated Security=SSPI;"
+```
+
 ### connection-strings
 
 Will append your connection strings to all `app.config` and `web.config` files. This command also searches for `appsettings.json` and creates a development copy (`appsettings.Development.json`) with your connection strings.
