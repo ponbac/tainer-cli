@@ -42,7 +42,6 @@ enum Commands {
 async fn main() {
     let cli = Cli::parse();
 
-    println!("Path: {:?}", cli.path);
     let root_path = cli
         .path
         .unwrap_or_else(|| std::env::current_dir().expect("Could not get current directory"));
