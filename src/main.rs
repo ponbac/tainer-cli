@@ -43,7 +43,9 @@ async fn main() {
     let cli = Cli::parse();
 
     println!("Path: {:?}", cli.path);
-    let root_path = cli.path.unwrap_or_else(|| PathBuf::from("."));
+    let root_path = cli
+        .path
+        .unwrap_or_else(|| std::env::current_dir().expect("Could not get current directory"));
     match &cli.command {
         Commands::ConnectionStrings { main, service_bus } => {
             commands::connection_strings::invoke(main, service_bus, &root_path);
