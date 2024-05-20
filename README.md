@@ -14,6 +14,7 @@ This will install the tool under your home directory and append it to your path,
 
 ## Commands
 
+- `setup` Tries to set up ELOS from scratch (MSMQ, Queues, connection strings, et.c.)
 - `connection-strings` Sets your connection strings everywhere it needs to be set
 - `git` Run a command against each git repository
 - `application-host` Allow authentication in applicationhost.config
