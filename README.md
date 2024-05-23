@@ -14,6 +14,7 @@ This will install the tool under your home directory and append it to your path,
 
 ## Commands
 
+- `setup` Tries to set up ELOS from scratch (MSMQ, Queues, connection strings, et.c.)
 - `connection-strings` Sets your connection strings everywhere it needs to be set
 - `git` Run a command against each git repository
 - `application-host` Allow authentication in applicationhost.config
@@ -22,6 +23,17 @@ This will install the tool under your home directory and append it to your path,
 - `help` Print this message or the help of the given subcommand(s)
 
 ## Examples
+
+### setup
+
+**This command has to be run in a shell with admin privileges!**
+
+Will run all the commands in the correct order to set up your environment and init all submodules. This includes setting connection strings, creating a user in the database, and enabling authentication in your `applicationhost.config`. Will also check if MSMQ is enabled and if not, enable it and initialize all queues.
+
+```powershell
+# tainer setup <MAIN_DB_CONNECTION_STRING> <SERVICE_BUS_CONNECTION_STRING>
+tainer setup "Data Source=PINKGOLD\PINKGOLD16;Initial Catalog=dbEnvirotainerELOS;Integrated Security=SSPI;" "Data Source=PINKGOLD\PINKGOLD16;Initial Catalog=EnvirotainerNServiceBus;Integrated Security=SSPI;"
+```
 
 ### connection-strings
 

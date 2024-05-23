@@ -7,6 +7,9 @@ use crate::win;
 static CONFIG_FILES: [&str; 3] = ["app.config", "web.config", "appsettings.json"];
 
 pub(crate) fn invoke(main: &str, service_bus: &str, root_path: &Path) {
+    println!("Walking from {}", root_path.display());
+    println!("Setting connection strings to {} and {}", main, service_bus);
+
     for entry in WalkDir::new(root_path)
         .into_iter()
         .filter_entry(|e| !is_hidden(e))

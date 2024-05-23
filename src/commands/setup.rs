@@ -7,7 +7,11 @@ use crate::{
     win::{self},
 };
 
-pub(crate) async fn invoke(root_path: &Path) {
+pub(crate) async fn invoke(
+    main_connection_string: &Option<String>,
+    service_bus_connection_string: &Option<String>,
+    root_path: &Path,
+) {
     println!("Running setup command");
     git::init_submodules(root_path);
 
@@ -25,11 +29,6 @@ pub(crate) async fn invoke(root_path: &Path) {
         }
     }
 
-    // execute ELOSQueues.ps1 with argument -account <account_name>
-    // let account_name: String = Input::new()
-    //     .with_prompt("Enter the name of your account (e.g. nlin@spinit.local)")
-    //     .interact()
-    //     .expect("Failed to get account name");
     let account_name = win::get_account_name();
     println!("Account name: {}", account_name);
     match win::execute_ps1(
@@ -44,14 +43,22 @@ pub(crate) async fn invoke(root_path: &Path) {
     }
 
     // Set up connection strings
-    let main_connection_string: String = Input::new()
-        .with_prompt("Main connection string (dbEnvirotainerELOS)")
-        .interact()
-        .expect("Failed to get main connection string");
-    let service_bus_connection_string: String = Input::new()
-        .with_prompt("Service bus connection string (EnvirotainerNServiceBus)")
-        .interact()
-        .expect("Failed to get service bus connection string");
+    let main_connection_string = if let Some(main) = main_connection_string {
+        main.clone()
+    } else {
+        Input::new()
+            .with_prompt("Main connection string (dbEnvirotainerELOS)")
+            .interact()
+            .expect("Failed to get main connection string")
+    };
+    let service_bus_connection_string = if let Some(service_bus) = service_bus_connection_string {
+        service_bus.clone()
+    } else {
+        Input::new()
+            .with_prompt("Service bus connection string (EnvirotainerNServiceBus)")
+            .interact()
+            .expect("Failed to get service bus connection string")
+    };
     commands::connection_strings::invoke(
         &main_connection_string,
         &service_bus_connection_string,
