@@ -30,8 +30,25 @@ pub fn enable_msmq() -> Result<(), String> {
         return Err("Please run this command in an admin shell.".to_string());
     }
 
+    // let enable_msmq_command = r#"
+    // Enable-WindowsOptionalFeature -Online -FeatureName MSMQ-Server -All -NoRestart
+    // "#;
+
+    // need to test this!
     let enable_msmq_command = r#"
-    Enable-WindowsOptionalFeature -Online -FeatureName MSMQ-Server -All -NoRestart
+    $features = @(
+        'MSMQ-Server',
+        'MSMQ-Services',
+        'MSMQ-DCOMProxy',
+        'MSMQ-ADIntegration',
+        'MSMQ-HTTP',
+        'MSMQ-Multicast',
+        'MSMQ-Triggers',
+        'MSMQ-RoutingServer'
+    )
+    foreach ($feature in $features) {
+        Enable-WindowsOptionalFeature -Online -FeatureName $feature -All -NoRestart
+    }
     "#;
 
     let enable_status = Command::new("powershell")
