@@ -79,7 +79,8 @@ fn append_connection_string(path: &Path, computer_name: &str, main: &str, servic
                 if !main_replaced {
                     new_line.push_str(&main_connection_string(computer_name, main));
                     new_line.push('\n');
-                } else if !service_bus_replaced {
+                }
+                if !service_bus_replaced {
                     new_line.push_str(&service_bus_connection_string(computer_name, service_bus));
                     new_line.push('\n');
                 }
