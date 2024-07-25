@@ -39,7 +39,11 @@ pub(crate) fn invoke(main: &str, service_bus: &str, root_path: &Path) {
 }
 
 fn create_dev_appsettings(path: &Path, main: &str, service_bus: &str) {
-    let content = std::fs::read_to_string(path).expect("Could not read file");
+    // check if appsettings.Development.json exists, else read 'path' (which is the appsettings.json)
+    let dev_settings_path = path.with_file_name("appsettings.Development.json");
+    let content = std::fs::read_to_string(&dev_settings_path).unwrap_or_else(|_| {
+        std::fs::read_to_string(path).expect("Could not read appsettings.json")
+    });
 
     // add the new connection strings
     let new_content = content
@@ -56,8 +60,7 @@ fn create_dev_appsettings(path: &Path, main: &str, service_bus: &str) {
         .collect::<Vec<String>>()
         .join("\n");
 
-    let dev_path = path.with_file_name("appsettings.Development.json");
-    std::fs::write(dev_path, new_content).expect("Could not write to file");
+    std::fs::write(dev_settings_path, new_content).expect("Could not write to file");
 }
 
 fn append_connection_string(path: &Path, computer_name: &str, main: &str, service_bus: &str) {
